@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVIDIA GB300 NVL72 互動式解析</title>
+<style>
+  :root {
+    --c-blue-50:#E6F1FB;--c-blue-200:#85B7EB;--c-blue-800:#0C447C;
+    --c-teal-50:#E1F5EE;--c-teal-200:#5DCAA5;--c-teal-800:#085041;
+    --c-amber-50:#FAEEDA;--c-amber-200:#EF9F27;--c-amber-800:#633806;
+    --c-purple-50:#EEEDFE;--c-purple-200:#AFA9EC;--c-purple-800:#3C3489;
+    --c-green-50:#EAF3DE;--c-green-200:#97C459;--c-green-800:#27500A;
+    --c-coral-50:#FAECE7;--c-coral-200:#F0997B;--c-coral-800:#712B13;
+    --c-gray-50:#F1EFE8;--c-gray-200:#B4B2A9;--c-gray-800:#444441;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#fff;color:#111;line-height:1.5;}
+  .widget{max-width:860px;margin:0 auto;padding:2rem 1.5rem 3rem;}
+  h1{font-size:20px;font-weight:500;margin-bottom:4px;}
+  .page-sub{font-size:14px;color:#666;margin-bottom:1.5rem;}
+  .nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.5rem;}
+  .nav-btn{font-size:13px;padding:6px 14px;border-radius:20px;border:0.5px solid #aaa;background:transparent;color:#666;cursor:pointer;transition:all .15s;}
+  .nav-btn:hover{background:#f5f5f5;}
+  .nav-btn.active{background:#E6F1FB;color:#185FA5;border-color:#85B7EB;}
+  .section{display:none;}.section.active{display:block;}
+  h3{font-size:16px;font-weight:500;margin-bottom:4px;}
+  .subtitle{font-size:13px;color:#666;margin-bottom:1.2rem;line-height:1.5;}
+  .rack-wrap{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
+  .rack{width:120px;flex-shrink:0;border:2px solid #555;border-radius:6px;padding:6px;background:#f8f8f8;}
+  .rack-label{font-size:11px;font-weight:500;text-align:center;color:#666;margin-bottom:6px;}
+  .tray{height:18px;border-radius:3px;margin-bottom:3px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;border:0.5px solid transparent;}
+  .tray:hover{opacity:.75;}
+  .tray-compute{background:var(--c-blue-50);border-color:var(--c-blue-200);color:var(--c-blue-800);}
+  .tray-nvswitch{background:var(--c-amber-50);border-color:var(--c-amber-200);color:var(--c-amber-800);}
+  .tray-nic{background:var(--c-teal-50);border-color:var(--c-teal-200);color:var(--c-teal-800);}
+  .tray-psu{background:var(--c-gray-50);border-color:var(--c-gray-200);color:var(--c-gray-800);}
+  .tray-mgmt{background:var(--c-purple-50);border-color:var(--c-purple-200);color:var(--c-purple-800);}
+  .rack-info{flex:1;min-width:200px;}
+  .legend{display:flex;flex-direction:column;gap:8px;margin-bottom:1rem;}
+  .legend-row{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;border-radius:6px;padding:6px 8px;border:0.5px solid transparent;}
+  .legend-row:hover{background:#f5f5f5;}
+  .legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+  .legend-name{font-weight:500;min-width:110px;}
+  .legend-desc{color:#666;font-size:12px;}
+  .detail-box{background:#f5f5f5;border:0.5px solid #ddd;border-radius:8px;padding:12px 14px;font-size:13px;color:#555;line-height:1.6;min-height:80px;}
+  .supplier-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+  .chip{font-size:11px;padding:3px 9px;border-radius:12px;font-weight:500;}
+  .chip-tw{background:var(--c-teal-50);color:var(--c-teal-800);}
+  .chip-us{background:var(--c-blue-50);color:var(--c-blue-800);}
+  .chip-kr{background:var(--c-purple-50);color:var(--c-purple-800);}
+  .chip-jp{background:var(--c-amber-50);color:var(--c-amber-800);}
+  .chip-nvidia{background:var(--c-green-50);color:var(--c-green-800);}
+  .specs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:1.4rem;}
+  .spec-card{background:#f5f5f5;border-radius:8px;padding:12px 14px;}
+  .spec-label{font-size:12px;color:#666;margin-bottom:4px;}
+  .spec-value{font-size:20px;font-weight:500;line-height:1.2;}
+  .spec-unit{font-size:12px;color:#666;}
+  .gpu-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:4px;margin-bottom:1rem;}
+  .gpu-chip{height:28px;border-radius:4px;background:var(--c-blue-50);border:0.5px solid var(--c-blue-200);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--c-blue-800);cursor:pointer;transition:background .1s,transform .1s;}
+  .gpu-chip:hover,.gpu-chip.active{background:var(--c-blue-200);transform:scale(1.05);}
+  .sw-chip-g{height:22px;border-radius:4px;background:var(--c-amber-50);border:0.5px solid var(--c-amber-200);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--c-amber-800);}
+  .nvlink-stat{display:flex;gap:10px;flex-wrap:wrap;font-size:13px;color:#666;margin-top:6px;}
+  .nvlink-stat span{background:#f5f5f5;border-radius:20px;padding:4px 10px;}
+  .perf-row{margin-bottom:14px;}
+  .perf-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;}
+  .perf-label span:last-child{color:#888;font-size:12px;}
+  .bar-track{height:10px;border-radius:5px;background:#eee;overflow:hidden;margin-bottom:3px;}
+  .bar-fill{height:100%;border-radius:5px;}
+  .bar-h100{background:var(--c-gray-200);}.bar-gb200{background:var(--c-blue-200);}.bar-gb300{background:var(--c-teal-200);}
+  .perf-legend{display:flex;gap:16px;margin-bottom:1rem;font-size:12px;color:#666;flex-wrap:wrap;}
+  .perf-legend span{display:flex;align-items:center;gap:5px;}
+  .dot{width:10px;height:10px;border-radius:2px;}
+  .sc-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .sc-table th{font-weight:500;color:#888;font-size:12px;text-align:left;padding:7px 10px;border-bottom:0.5px solid #ddd;}
+  .sc-table td{padding:9px 10px;border-bottom:0.5px solid #eee;vertical-align:top;}
+  .sc-table tr:last-child td{border-bottom:none;}
+  .sc-table td:first-child{font-weight:500;min-width:130px;}
+  .sc-chips{display:flex;flex-wrap:wrap;gap:4px;}
+  .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;}
+  .filter-btn{font-size:12px;padding:4px 12px;border-radius:14px;border:0.5px solid #aaa;background:transparent;color:#666;cursor:pointer;}
+  .filter-btn:hover{background:#f5f5f5;}
+  .filter-btn.active{background:#f0f0f0;color:#111;border-color:#888;}
+  .sc-row.hidden{display:none;}
+  .uc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+  .uc-card{background:#f8f8f8;border-radius:10px;padding:14px;border:0.5px solid #ddd;}
+  .uc-icon{width:28px;height:28px;border-radius:6px;margin-bottom:8px;display:flex;align-items:center;justify-content:center;}
+  .uc-title{font-size:13px;font-weight:500;margin-bottom:4px;}
+  .uc-desc{font-size:12px;color:#666;line-height:1.5;}
+  .info-box{background:#f5f5f5;border-radius:8px;padding:12px 14px;font-size:13px;color:#666;line-height:1.7;margin-top:1rem;}
+  @media(prefers-color-scheme:dark){
+    body{background:#1a1a1a;color:#e0e0e0;}
+    .rack{background:#2a2a2a;border-color:#666;}
+    .nav-btn{border-color:#555;color:#aaa;}
+    .nav-btn:hover{background:#2a2a2a;}
+    .nav-btn.active{background:#0C447C;color:#85B7EB;border-color:#185FA5;}
+    .detail-box,.spec-card,.info-box,.uc-card{background:#2a2a2a;border-color:#444;}
+    .nvlink-stat span,.filter-btn{background:#2a2a2a;}
+    .legend-row:hover{background:#2a2a2a;}
+    .bar-track{background:#333;}
+    .sc-table th{border-color:#444;color:#aaa;}
+    .sc-table td{border-color:#333;}
+    .subtitle,.legend-desc,.spec-unit,.perf-legend,.nvlink-stat,.filter-btn,.uc-desc{color:#aaa;}
+  }
+</style>
+</head>
+<body>
+<div class="widget">
+  <h1>NVIDIA GB300 NVL72 互動式解析</h1>
+  <p class="page-sub">機架構造 · 核心規格 · NVLink 互聯 · 效能對比 · 供應鏈 · 應用場景</p>
+  <div class="nav" id="nav">
+    <button class="nav-btn active" data-tab="rack">機架構造</button>
+    <button class="nav-btn" data-tab="specs">核心規格</button>
+    <button class="nav-btn" data-tab="nvlink">NVLink 互聯</button>
+    <button class="nav-btn" data-tab="perf">效能對比</button>
+    <button class="nav-btn" data-tab="supply">供應鏈</button>
+    <button class="nav-btn" data-tab="usecase">應用場景</button>
+  </div>
+
+  <div class="section active" id="tab-rack">
+    <h3>機架結構剖析</h3>
+    <p class="subtitle">點選各層組件查看說明與主力供應商。一個機架 = 一台超大型 GPU。</p>
+    <div class="rack-wrap">
+      <div>
+        <div class="rack">
+          <div class="rack-label">GB300 NVL72</div>
+          <div class="tray tray-mgmt" onclick="showDetail('mgmt')">Mission Control</div>
+          <div class="tray tray-psu" onclick="showDetail('psu')">PSU / 電源分配</div>
+          <div class="tray tray-nvswitch" onclick="showDetail('nsw')">NVSwitch ×4</div>
+          <div class="tray tray-compute" onclick="showDetail('compute')">GB300 Tray ×2</div>
+          <div class="tray tray-compute" onclick="showDetail('compute')">GB300 Tray ×2</div>
+          <div class="tray tray-compute" onclick="showDetail('compute')">GB300 Tray ×2</div>
+          <div class="tray tray-compute" onclick="showDetail('compute')">GB300 Tray ×2</div>
+          <div class="tray tray-compute" onclick="showDetail('compute')">GB300 Tray ×2</div>
+          <div class="tray tray-compute" onclick="showDetail('compute')">GB300 Tray ×2</div>
+          <div class="tray tray-compute" onclick="showDetail('compute')">GB300 Tray ×2</div>
+          <div class="tray tray-compute" onclick="showDetail('compute')">GB300 Tray ×2</div>
+          <div class="tray tray-compute" onclick="showDetail('compute')">GB300 Tray ×2</div>
+          <div class="tray tray-nvswitch" onclick="showDetail('nsw')">NVSwitch ×4</div>
+          <div class="tray tray-nic" onclick="showDetail('nic')">ConnectX-8 NIC</div>
+          <div class="tray tray-nic" onclick="showDetail('nic')">ConnectX-8 NIC</div>
+          <div class="tray tray-psu" onclick="showDetail('psu')">PSU / 電源分配</div>
+          <div class="tray tray-mgmt" onclick="showDetail('cool')">液冷分配單元</div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:5px;flex-wrap:wrap;">
+          <span style="font-size:11px;display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--c-blue-50);border:0.5px solid var(--c-blue-200);display:inline-block"></span><span style="color:#888">計算</span></span>
+          <span style="font-size:11px;display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--c-amber-50);border:0.5px solid var(--c-amber-200);display:inline-block"></span><span style="color:#888">交換</span></span>
+          <span style="font-size:11px;display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--c-teal-50);border:0.5px solid var(--c-teal-200);display:inline-block"></span><span style="color:#888">網路</span></span>
+          <span style="font-size:11px;display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--c-gray-50);border:0.5px solid var(--c-gray-200);display:inline-block"></span><span style="color:#888">電源</span></span>
+          <span style="font-size:11px;display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:2px;background:var(--c-purple-50);border:0.5px solid var(--c-purple-200);display:inline-block"></span><span style="color:#888">管理/冷卻</span></span>
+        </div>
+      </div>
+      <div class="rack-info">
+        <div class="legend">
+          <div class="legend-row" onclick="showDetail('compute')"><div class="legend-dot" style="background:var(--c-blue-50);border:0.5px solid var(--c-blue-200)"></div><span class="legend-name">計算托盤</span><span class="legend-desc">18 個，共 72 GPU</span></div>
+          <div class="legend-row" onclick="showDetail('nsw')"><div class="legend-dot" style="background:var(--c-amber-50);border:0.5px solid var(--c-amber-200)"></div><span class="legend-name">NVSwitch</span><span class="legend-desc">GPU 間全互聯</span></div>
+          <div class="legend-row" onclick="showDetail('nic')"><div class="legend-dot" style="background:var(--c-teal-50);border:0.5px solid var(--c-teal-200)"></div><span class="legend-name">ConnectX-8 NIC</span><span class="legend-desc">800 Gb/s 對外網路</span></div>
+          <div class="legend-row" onclick="showDetail('psu')"><div class="legend-dot" style="background:var(--c-gray-50);border:0.5px solid var(--c-gray-200)"></div><span class="legend-name">電源分配</span><span class="legend-desc">峰值 120 kW</span></div>
+          <div class="legend-row" onclick="showDetail('mgmt')"><div class="legend-dot" style="background:var(--c-purple-50);border:0.5px solid var(--c-purple-200)"></div><span class="legend-name">Mission Control</span><span class="legend-desc">全棧管理平台</span></div>
+          <div class="legend-row" onclick="showDetail('cool')"><div class="legend-dot" style="background:var(--c-purple-50);border:0.5px solid var(--c-purple-200)"></div><span class="legend-name">液冷系統</span><span class="legend-desc">直接液冷 DLC</span></div>
+        </div>
+        <div class="detail-box" id="detail-box">點選左側機架任一層，或右側項目查看詳細說明與供應商。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" id="tab-specs">
+    <h3>核心規格</h3>
+    <p class="subtitle">每個機架等同於一台 exascale 超級電腦。</p>
+    <div class="specs-grid">
+      <div class="spec-card"><div class="spec-label">GPU 數量</div><div class="spec-value">72 <span class="spec-unit">顆 B300</span></div></div>
+      <div class="spec-card"><div class="spec-label">Grace CPU</div><div class="spec-value">36 <span class="spec-unit">顆 Arm</span></div></div>
+      <div class="spec-card"><div class="spec-label">每 GPU 記憶體</div><div class="spec-value">288 <span class="spec-unit">GB HBM3e</span></div></div>
+      <div class="spec-card"><div class="spec-label">機架總記憶體</div><div class="spec-value">20.7 <span class="spec-unit">TB</span></div></div>
+      <div class="spec-card"><div class="spec-label">FP4 算力</div><div class="spec-value">1.1 <span class="spec-unit">ExaFLOPS</span></div></div>
+      <div class="spec-card"><div class="spec-label">GPU 間帶寬</div><div class="spec-value">1.8 <span class="spec-unit">TB/s /GPU</span></div></div>
+      <div class="spec-card"><div class="spec-label">機架總互聯</div><div class="spec-value">130 <span class="spec-unit">TB/s</span></div></div>
+      <div class="spec-card"><div class="spec-label">峰值功耗</div><div class="spec-value">120 <span class="spec-unit">kW</span></div></div>
+      <div class="spec-card"><div class="spec-label">對外網路 /GPU</div><div class="spec-value">800 <span class="spec-unit">Gb/s</span></div></div>
+      <div class="spec-card"><div class="spec-label">HBM 總帶寬</div><div class="spec-value">576 <span class="spec-unit">TB/s</span></div></div>
+      <div class="spec-card"><div class="spec-label">CUDA Cores /GPU</div><div class="spec-value">20,480</div></div>
+      <div class="spec-card"><div class="spec-label">每 GPU TDP</div><div class="spec-value">1,400 <span class="spec-unit">W</span></div></div>
+    </div>
+    <div class="info-box" style="margin-top:0"><strong>Grace Blackwell Superchip：</strong>每個 Superchip = 1 顆 Grace CPU + 2 顆 B300 GPU，透過 NVLink-C2C 互聯形成統一 coherent memory 架構。18 個托盤 = 36 CPU + 72 GPU，整台機架視作單一節點。</div>
+  </div>
+
+  <div class="section" id="tab-nvlink">
+    <h3>NVLink 5 全互聯網路</h3>
+    <p class="subtitle">72 顆 GPU 透過 NVSwitch 實現 all-to-all 全互聯。點選任一 GPU 查看說明。</p>
+    <div style="font-size:12px;color:#888;margin-bottom:6px;">72 顆 B300 GPU</div>
+    <div class="gpu-grid" id="gpu-grid"></div>
+    <div style="font-size:12px;color:#888;margin-bottom:4px;">8 顆 NVSwitch</div>
+    <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-bottom:10px;">
+      <div class="sw-chip-g">SW 1</div><div class="sw-chip-g">SW 2</div><div class="sw-chip-g">SW 3</div><div class="sw-chip-g">SW 4</div>
+      <div class="sw-chip-g">SW 5</div><div class="sw-chip-g">SW 6</div><div class="sw-chip-g">SW 7</div><div class="sw-chip-g">SW 8</div>
+    </div>
+    <div class="nvlink-stat"><span>NVLink Gen 5</span><span>單 GPU 雙向 1.8 TB/s</span><span>機架總計 130 TB/s</span><span>延遲 &lt; 1 μs</span></div>
+    <div class="info-box" id="nvlink-detail" style="margin-top:1rem;">72 顆 GPU 透過 NVSwitch 形成一個巨大的共享記憶體空間（20.7 TB），任何兩顆 GPU 都能直接存取彼此的 HBM3e 記憶體——這是訓練兆參數模型和長上下文推理的基礎。</div>
+  </div>
+
+  <div class="section" id="tab-perf">
+    <h3>效能世代對比</h3>
+    <p class="subtitle">以 H100（Hopper）為基準 1×，比較各世代關鍵指標。</p>
+    <div class="perf-legend">
+      <span><span class="dot" style="background:var(--c-gray-200)"></span>H100（基準）</span>
+      <span><span class="dot" style="background:var(--c-blue-200)"></span>GB200 NVL72</span>
+      <span><span class="dot" style="background:var(--c-teal-200)"></span>GB300 NVL72</span>
+    </div>
+    <div id="perf-bars"></div>
+    <div class="info-box">GB300 的最大突破在於 <strong>FP4 精度</strong> 與 <strong>Attention 加速</strong>，正好對應 reasoning model（DeepSeek-R1、o3）推理時大量使用的運算模式。</div>
+  </div>
+
+  <div class="section" id="tab-supply">
+    <h3>GB300 NVL72 供應鏈圖譜</h3>
+    <p class="subtitle">超過 50 個零組件類別，橫跨台灣、美國、韓國、日本。按地區篩選。</p>
+    <div class="filter-row" id="filter-row">
+      <button class="filter-btn active" data-filter="all">全部</button>
+      <button class="filter-btn" data-filter="tw">🇹🇼 台灣</button>
+      <button class="filter-btn" data-filter="us">🇺🇸 美國</button>
+      <button class="filter-btn" data-filter="kr">🇰🇷 韓國</button>
+      <button class="filter-btn" data-filter="jp">🇯🇵 日本</button>
+    </div>
+    <table class="sc-table">
+      <thead><tr><th>零組件</th><th>類別</th><th>主力供應商</th></tr></thead>
+      <tbody id="sc-tbody"></tbody>
+    </table>
+    <div class="info-box"><strong>系統整合商（ODM）：</strong>鴻海（Hon Hai）、廣達（Quanta）、緯創（Wistron）、緯穎（Wiwynn）是持有 NVIDIA Certified Systems 認證的四大 GB300 整機供應商，其中鴻海為最先完成量產與交付者，2025 年 AI 伺服器營收目標逾新台幣 1 兆元，市占約 40%。</div>
+  </div>
+
+  <div class="section" id="tab-usecase">
+    <h3>主要應用場景</h3>
+    <p class="subtitle">GB300 NVL72 特別為以下工作負載最佳化。</p>
+    <div class="uc-grid">
+      <div class="uc-card"><div class="uc-icon" style="background:var(--c-blue-50)"><span style="font-size:14px;color:var(--c-blue-800)">R</span></div><div class="uc-title">AI 推理 (Reasoning)</div><div class="uc-desc">test-time scaling，o3/DeepSeek-R1 的最佳平台。相比 H100 提升 50×。</div></div>
+      <div class="uc-card"><div class="uc-icon" style="background:var(--c-teal-50)"><span style="font-size:14px;color:var(--c-teal-800)">T</span></div><div class="uc-title">大模型訓練</div><div class="uc-desc">百兆參數模型訓練，Azure 用它縮短訓練週期從月到週。</div></div>
+      <div class="uc-card"><div class="uc-icon" style="background:var(--c-amber-50)"><span style="font-size:14px;color:var(--c-amber-800)">C</span></div><div class="uc-title">長上下文推理</div><div class="uc-desc">20.7 TB 共享記憶體讓超長上下文（256K+）不再是瓶頸。</div></div>
+      <div class="uc-card"><div class="uc-icon" style="background:var(--c-purple-50)"><span style="font-size:14px;color:var(--c-purple-800)">A</span></div><div class="uc-title">Agentic AI</div><div class="uc-desc">多步驟自主代理工作流，高並發推理吞吐讓大量 agent 同時運行。</div></div>
+      <div class="uc-card"><div class="uc-icon" style="background:var(--c-coral-50)"><span style="font-size:14px;color:var(--c-coral-800)">P</span></div><div class="uc-title">Physical AI</div><div class="uc-desc">機器人與自動駕駛模型訓練，需要大量模擬與即時推理能力。</div></div>
+      <div class="uc-card"><div class="uc-icon" style="background:var(--c-green-50)"><span style="font-size:14px;color:var(--c-green-800)">S</span></div><div class="uc-title">科學計算 HPC</div><div class="uc-desc">分子動力學、氣候模型、新藥探索等需要 exaFLOPS 算力的研究。</div></div>
+    </div>
+    <div class="info-box"><strong>定價：</strong>每機架約 300–400 萬美元。Azure 已部署 64 個 GB300 NVL72 機架（4,608 GPU）供 OpenAI 使用。下一代 Vera Rubin（2026）將引入 HBM4。</div>
+  </div>
+</div>
+
+<script>
+const details={
+  mgmt:{title:'NVIDIA Mission Control',text:'全棧管理平台，協調 72 GPU 的 NVLink domain 工作排程、基礎設施韌性監控與即時調度。',suppliers:[{name:'NVIDIA',cls:'chip-nvidia',flag:'🇺🇸'}]},
+  psu:{title:'電源分配單元（PSU）',text:'機架峰值功耗約 120 kW，採雙 415V 三相供電。電源效率 94.5%，諧波失真 < 5%。VRM 多相控制晶片由美系廠商供應；電源連接器使用 TE Connectivity RapidLock 規格，可承載 ~675A。',suppliers:[{name:'Delta 台達',cls:'chip-tw',flag:'🇹🇼'},{name:'Lite-On 光寶',cls:'chip-tw',flag:'🇹🇼'},{name:'Texas Instruments',cls:'chip-us',flag:'🇺🇸'},{name:'Infineon',cls:'chip-us',flag:'🇺🇸'},{name:'TE Connectivity',cls:'chip-us',flag:'🇺🇸'}]},
+  nsw:{title:'NVSwitch（第五代）',text:'8 顆 NVSwitch 晶片構成 72 GPU 全互聯交換網路，提供 130 TB/s 機架內總帶寬。NVSwitch 晶片由 NVIDIA 設計、TSMC 製造；NVLink 連接器由 Amphenol 供應。',suppliers:[{name:'NVIDIA (設計)',cls:'chip-nvidia',flag:'🇺🇸'},{name:'TSMC (製造)',cls:'chip-tw',flag:'🇹🇼'},{name:'Amphenol (連接器)',cls:'chip-us',flag:'🇺🇸'},{name:'Ibiden (基板)',cls:'chip-jp',flag:'🇯🇵'},{name:'Unimicron 欣興',cls:'chip-tw',flag:'🇹🇼'}]},
+  compute:{title:'Grace Blackwell 計算托盤',text:'每托盤含 1 顆 Grace CPU + 2 顆 B300 GPU。B300 GPU 由 TSMC N4P 製程製造，透過 CoWoS-L 先進封裝整合 288 GB HBM3e（12-Hi 堆疊）。HBM3e 由 SK Hynix 與 Micron 供應。',suppliers:[{name:'NVIDIA (設計)',cls:'chip-nvidia',flag:'🇺🇸'},{name:'TSMC (製造+封裝)',cls:'chip-tw',flag:'🇹🇼'},{name:'SK Hynix (HBM3e)',cls:'chip-kr',flag:'🇰🇷'},{name:'Micron (HBM3e)',cls:'chip-us',flag:'🇺🇸'},{name:'ASE 日月光',cls:'chip-tw',flag:'🇹🇼'},{name:'Amkor',cls:'chip-us',flag:'🇺🇸'}]},
+  nic:{title:'ConnectX-8 SuperNIC',text:'每 GPU 800 Gb/s RDMA，支援 Quantum-X800 InfiniBand 或 Spectrum-X Ethernet。NIC 晶片由 NVIDIA（前 Mellanox）設計，TSMC 製造；光纖收發模組由台系廠商供應。',suppliers:[{name:'NVIDIA Mellanox (設計)',cls:'chip-nvidia',flag:'🇺🇸'},{name:'TSMC (製造)',cls:'chip-tw',flag:'🇹🇼'},{name:'InnoLight 旭創',cls:'chip-tw',flag:'🇹🇼'},{name:'Eoptolink 索爾思',cls:'chip-tw',flag:'🇹🇼'}]},
+  cool:{title:'全液冷分配單元（CDU）',text:'整個機架採直接液冷（DLC），液冷組件價值約 $49,860/機架，比 GB200 版本高 20%。cold plate 直接帶走 GPU/CPU 熱量，整機約 90% 熱量由液冷帶走。',suppliers:[{name:'CoolIT Systems',cls:'chip-us',flag:'🇺🇸'},{name:'Vertiv',cls:'chip-us',flag:'🇺🇸'},{name:'Auras 超眾',cls:'chip-tw',flag:'🇹🇼'},{name:'Gigabyte 技嘉',cls:'chip-tw',flag:'🇹🇼'}]}
+};
+
+function showDetail(key){
+  const d=details[key];if(!d)return;
+  const chips=d.suppliers.map(s=>`<span class="chip ${s.cls}">${s.flag} ${s.name}</span>`).join('');
+  document.getElementById('detail-box').innerHTML=`<strong>${d.title}</strong><br>${d.text}<div class="supplier-chips">${chips}</div>`;
+}
+
+document.getElementById('nav').addEventListener('click',e=>{
+  const btn=e.target.closest('.nav-btn');if(!btn)return;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+});
+
+const grid=document.getElementById('gpu-grid');
+for(let i=1;i<=72;i++){
+  const d=document.createElement('div');d.className='gpu-chip';d.textContent='G'+i;
+  d.onclick=()=>{
+    document.querySelectorAll('.gpu-chip').forEach(x=>x.classList.remove('active'));d.classList.add('active');
+    const pair=i%2===0?i-1:i+1;
+    document.getElementById('nvlink-detail').innerHTML=`<strong>GPU ${i} 的連線狀態</strong><br>透過 8 顆 NVSwitch，GPU ${i} 可與其餘 71 顆 GPU 直接通訊（1.8 TB/s 雙向）。同托盤的 GPU ${pair} 透過 NVLink-C2C 直連，延遲最低。全機架 72 GPU 共享 20.7 TB HBM3e，無需搬移資料即可存取任一 GPU 記憶體。`;
+  };grid.appendChild(d);
+}
+
+const perfData=[
+  {label:'AI 工廠輸出 (FP4)',h100:2,gb200:34,gb300:100,note:'vs H100 約 50×'},
+  {label:'Attention 效能',h100:10,gb200:50,gb300:100,note:'GB300 比 GB200 快 2×'},
+  {label:'記憶體容量 /GPU',h100:28,gb200:53,gb300:80,note:'80→192→288 GB'},
+  {label:'HBM 帶寬',h100:25,gb200:60,gb300:100,note:'3.35→7.7→8 TB/s'},
+  {label:'每瓦吞吐量',h100:10,gb200:40,gb300:100,note:'vs H100 約 10×'},
+];
+const pc=document.getElementById('perf-bars');
+perfData.forEach(d=>{pc.innerHTML+=`<div class="perf-row"><div class="perf-label"><span>${d.label}</span><span>${d.note}</span></div><div class="bar-track"><div class="bar-fill bar-h100" style="width:${d.h100}%"></div></div><div class="bar-track"><div class="bar-fill bar-gb200" style="width:${d.gb200}%"></div></div><div class="bar-track"><div class="bar-fill bar-gb300" style="width:${d.gb300}%"></div></div></div>`;});
+
+const scData=[
+  {comp:'B300 GPU 晶片',cat:'半導體',region:'tw',suppliers:[{name:'TSMC 製造 (N4P)',flag:'🇹🇼'},{name:'NVIDIA 設計',flag:'🇺🇸'}]},
+  {comp:'Grace CPU',cat:'半導體',region:'tw',suppliers:[{name:'TSMC 製造',flag:'🇹🇼'},{name:'NVIDIA/Arm 設計',flag:'🇺🇸'}]},
+  {comp:'HBM3e 記憶體',cat:'記憶體',region:'kr',suppliers:[{name:'SK Hynix (主)',flag:'🇰🇷'},{name:'Micron',flag:'🇺🇸'}]},
+  {comp:'CoWoS-L 先進封裝',cat:'封裝',region:'tw',suppliers:[{name:'TSMC CoWoS',flag:'🇹🇼'},{name:'ASE 日月光',flag:'🇹🇼'},{name:'Amkor',flag:'🇺🇸'}]},
+  {comp:'NVSwitch 晶片',cat:'半導體',region:'tw',suppliers:[{name:'NVIDIA 設計',flag:'🇺🇸'},{name:'TSMC 製造',flag:'🇹🇼'}]},
+  {comp:'ConnectX-8 NIC',cat:'網路',region:'us',suppliers:[{name:'NVIDIA Mellanox',flag:'🇺🇸'},{name:'TSMC 製造',flag:'🇹🇼'}]},
+  {comp:'PCB 基板',cat:'PCB',region:'tw',suppliers:[{name:'Unimicron 欣興',flag:'🇹🇼'},{name:'TTM Technologies',flag:'🇺🇸'},{name:'Ibiden',flag:'🇯🇵'}]},
+  {comp:'NVLink 連接器',cat:'連接器',region:'us',suppliers:[{name:'Amphenol',flag:'🇺🇸'},{name:'TE Connectivity',flag:'🇺🇸'}]},
+  {comp:'光纖收發模組',cat:'網路',region:'tw',suppliers:[{name:'InnoLight 旭創',flag:'🇹🇼'},{name:'Eoptolink 索爾思',flag:'🇹🇼'},{name:'Coherent',flag:'🇺🇸'}]},
+  {comp:'液冷 Cold Plate',cat:'散熱',region:'us',suppliers:[{name:'CoolIT Systems',flag:'🇺🇸'},{name:'Auras 超眾',flag:'🇹🇼'},{name:'Vertiv',flag:'🇺🇸'}]},
+  {comp:'電源供應器 PSU',cat:'電源',region:'tw',suppliers:[{name:'Delta 台達',flag:'🇹🇼'},{name:'Lite-On 光寶',flag:'🇹🇼'}]},
+  {comp:'VRM 電源模組',cat:'電源',region:'us',suppliers:[{name:'Texas Instruments',flag:'🇺🇸'},{name:'Infineon',flag:'🇺🇸'},{name:'MPS 茂睿芯',flag:'🇺🇸'}]},
+  {comp:'機架整機 ODM',cat:'系統整合',region:'tw',suppliers:[{name:'鴻海 Hon Hai',flag:'🇹🇼'},{name:'廣達 Quanta',flag:'🇹🇼'},{name:'緯創 Wistron',flag:'🇹🇼'},{name:'緯穎 Wiwynn',flag:'🇹🇼'}]},
+  {comp:'高速銅纜 Twinax',cat:'連接器',region:'tw',suppliers:[{name:'Bizlink 碧聯',flag:'🇹🇼'},{name:'Amphenol',flag:'🇺🇸'}]},
+  {comp:'SOCAMM 記憶體模組',cat:'記憶體',region:'kr',suppliers:[{name:'SK Hynix',flag:'🇰🇷'},{name:'Micron',flag:'🇺🇸'}]},
+  {comp:'封裝基板 ABF',cat:'PCB',region:'jp',suppliers:[{name:'Ibiden',flag:'🇯🇵'},{name:'Shinko Electric',flag:'🇯🇵'},{name:'Nan Ya PCB 南亞',flag:'🇹🇼'}]},
+];
+const tbody=document.getElementById('sc-tbody');
+scData.forEach(row=>{
+  const chips=row.suppliers.map(s=>`<span class="chip chip-${row.region}">${s.flag} ${s.name}</span>`).join(' ');
+  const tr=document.createElement('tr');tr.className='sc-row';tr.dataset.region=row.region;
+  tr.innerHTML=`<td>${row.comp}</td><td style="color:#888;font-size:12px">${row.cat}</td><td><div class="sc-chips">${chips}</div></td>`;
+  tbody.appendChild(tr);
+});
+document.getElementById('filter-row').addEventListener('click',e=>{
+  const btn=e.target.closest('.filter-btn');if(!btn)return;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const f=btn.dataset.filter;
+  document.querySelectorAll('.sc-row').forEach(r=>{r.classList.toggle('hidden',f!=='all'&&r.dataset.region!==f);});
+});
+</script>
+</body>
+</html>
